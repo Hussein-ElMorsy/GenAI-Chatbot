@@ -36,7 +36,6 @@ if prompt := st.chat_input("Type your message here..."):
     st.chat_message("user").markdown(prompt)
     st.session_state.messages.append({"role": "user", "content": prompt})
 
-    # ---- 🧠 BUILD CONTEXT ----
     # Combine chat history into a single string
     history = "\n".join(
         [f"{m['role'].capitalize()}: {m['content']}" for m in st.session_state.messages]
