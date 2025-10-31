@@ -1,42 +1,68 @@
 from dotenv import load_dotenv, find_dotenv
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
+import streamlit as st
 
+# Load environment variables
 _ = load_dotenv(find_dotenv())
 
+# Configure Streamlit page
+st.set_page_config(
+    page_title='Chatbot',
+    page_icon='🤖',
+    layout='centered'
+)
+
+st.title("💬 GenAI Chatbot")
+
+# Initialize LLM
 llm = ChatGroq(
-    model='llama-3.3-70b-versatile',
+    model="llama-3.3-70b-versatile",
     temperature=0.1
 )
 
-parser = StrOutputParser()
+# Initialize session state for chat history
+if "messages" not in st.session_state:
+    st.session_state.messages = [] 
 
-def chat():
-    chat_history = [
-        ('system', 'You are helpful chatbot. Be concise and accurate.')
-    ]
+# Display chat history
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
 
-    print("Langchain Chatbot. Type 'exit' to quit\n")
+# Chat input field
+if prompt := st.chat_input("Type your message here..."):
+    # Show user message
+    st.chat_message("user").markdown(prompt)
+    st.session_state.messages.append({"role": "user", "content": prompt})
 
-    while True:
-        user_input = input('You: ').strip()
+    # ---- 🧠 BUILD CONTEXT ----
+    # Combine chat history into a single string
+    history = "\n".join(
+        [f"{m['role'].capitalize()}: {m['content']}" for m in st.session_state.messages]
+    )
 
-        if user_input.lower() == 'exit':
-            break
+    # Create contextual prompt
+    chat_prompt = ChatPromptTemplate.from_template(
+        """You are a helpful AI assistant. Continue the conversation based on the history below.
 
-        chat_history.append(('user', user_input))
+        Conversation history:
+        {history}
 
-        prompt = ChatPromptTemplate.from_messages(chat_history)
+        User: {input}
+        Assistant:"""
+    )
 
-        chain = prompt | llm | parser
+    # Run LLM
+    chain = chat_prompt | llm
+    response = chain.invoke({"history": history, "input": prompt})
 
-        response = chain.invoke({})
+    # Extract reply
+    reply = response.content
 
-        print(f"Bot: {response}\n")
+    # Show assistant response
+    with st.chat_message("assistant"):
+        st.markdown(reply)
 
-        chat_history.append(('assistant', response))
-
-        print('-'*60,'\n')
-
-chat()
+    # Save assistant reply to history
+    st.session_state.messages.append({"role": "assistant", "content": reply})
