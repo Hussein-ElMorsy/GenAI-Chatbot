@@ -1,10 +1,10 @@
-from dotenv import load_dotenv, find_dotenv
+#from dotenv import load_dotenv, find_dotenv
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 import streamlit as st
 
 # Load environment variables
-_ = load_dotenv(find_dotenv())
+#_ = load_dotenv(find_dotenv())
 
 # Configure Streamlit page
 st.set_page_config(
